@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(cors());
 
 mongoose
-  .connect("mongodb://localhost:27017/gyaanSensei", {
+  .connect("mongodb+srv://mongodbAtlas:mongodbAtlas@gyaansensei.l5ad5.mongodb.net/", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
