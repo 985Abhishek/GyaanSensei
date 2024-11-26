@@ -27,8 +27,6 @@ const createProfile = async (req, res) => {
       ? await uploadToCloudinary(req.files.avatar[0])
       : null;
 
-    
-
     const mediaUrls = [];
     if (req.files.media) {
       for (let file of req.files.media) {

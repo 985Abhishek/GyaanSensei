@@ -3,14 +3,16 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
-const User = require("./models/User");
+const User = require("../models/User");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const crypto = require("crypto");
-const ProfileDataRoutes = require("./routes/ProfileDataRoutes")
-
-const profileRoutes = require("./routes/Profile");
-dotenv.config({ path: "./config/.env" });
+const ProfileDataRoutes = require("../routes/ProfileDataRoutes");
+const LikesRoute = require("../routes/LikesRoute");
+const CommentsRoute = require("../routes/CommentsRoute");
+const profileRoutes = require("../routes/Profile");
+const Profile = require("../models/Profileform");
+const { initSocket } = require("./Socket");
+dotenv.config({ path: "../config/.env" });
 
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
@@ -18,11 +20,19 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Socket.io setup
+
+const server = require("http").createServer(app);
+initSocket(server);
+
 mongoose
-  .connect("mongodb+srv://mongodbAtlas:mongodbAtlas@gyaansensei.l5ad5.mongodb.net/", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    "mongodb+srv://mongodbAtlas:mongodbAtlas@gyaansensei.l5ad5.mongodb.net/",
+    {
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("Connected to MongoDB"))
   .catch(() => console.log(error, "Connection to MongoDb failed"));
 
@@ -75,7 +85,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
   if (!user) return res.status(400).json({ message: "User Not Found " });
 
   const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1h", // Token expires in 1 hour
+    expiresIn: "1h",
   });
 
   console.log(resetToken);
@@ -109,8 +119,6 @@ app.post("/api/auth/reset-password", async (req, res) => {
     console.log(process.env.JWT_SECRET);
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
 
-    console.log("zzzzzzzzzzzzzzzzzzzzzzzzz", decoded);
-
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(400).json({ message: "User not found" });
 
@@ -138,12 +146,25 @@ app.get("/", async (req, res) => {
   return res.json({ message: "Hello" });
 });
 
+app.get("/api/profile/ids", async (req, res) => {
+  try {
+    const profiles = await Profile.find({}, { _id: 1 });
+    const profileIds = profiles.map((profile) => profile._id);
+    res.json(profileIds);
+  } catch (error) {
+    console.error("Error fetching profile IDs:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 app.use("/api/profile", profileRoutes);
 
-app.use("/api/profile/",ProfileDataRoutes)
+app.use("/api/profile/", ProfileDataRoutes);
+
+app.use("/api/likes/", LikesRoute);
+
+app.use("/api/comments", CommentsRoute);
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-
-

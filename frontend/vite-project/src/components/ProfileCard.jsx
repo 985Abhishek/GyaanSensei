@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,12 +9,18 @@ import {
   Divider,
   Link,
   Grid2,
+  IconButton,
+  Badge,
 } from "@mui/material";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ChatIcon from '@mui/icons-material/Chat';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ChatIcon from "@mui/icons-material/Chat";
+import { useSocket } from "./SocketContext";
+import CommentModal from "./CommentModal";
+import axios from "axios";
 
 const ProfileCard = ({ profile }) => {
+  const socket = useSocket();
   const {
     avatar,
     username,
@@ -26,7 +32,103 @@ const ProfileCard = ({ profile }) => {
     rating,
   } = profile;
 
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(profile.likeCount || 0);
+  const [comments, setComments] = useState([]);
+
+  const [openCommentModal, setOpenCommentModal] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("like_updated", handleNewLike);
+      socket.on("new_comment", handleNewComment);
+    }
+
+    // Cleanup
+    return () => {
+      if (socket) {
+        socket.off("like_updated", handleNewLike);
+        socket.off("new_comment", handleNewComment);
+      }
+    };
+  }, [socket]);
+
+  const handleNewLike = (data) => {
+    if (data.profileId === profile._id) {
+      setLikesCount((prev) => (data.action === "liked" ? prev + 1 : prev - 1));
+    }
+  };
+
+  const handleNewComment = (data) => {
+    if (data.profileId === profile._id) {
+      setComments((prevComments) => [...prevComments, data.comment]);
+    }
+  };
+
+  const toggleLike = async () => {
+    try {
+      const userIdString = localStorage.getItem("userId");
+      const userId = userIdString ? JSON.parse(userIdString) : null;
+      console.log(userId, "userIduserIduserIduserIduserIduserId");
+
+      if (!userId) {
+        console.error("User not logged in!");
+        return;
+      }
+      const objectIdUserId = mongoose.Types.ObjectId(userId);
+      const res = await axios.post(
+        `http://localhost:3000/api/likes/${profile._id}`,
+        {
+          userId: objectIdUserId,
+        }
+      );
+
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      setLikesCount((prevCount) => prevCount + (isLiked ? -1 : 1));
+
+      if (socket) {
+        socket.emit("like_updated", {
+          profileId: profile._id,
+          userId: objectIdUserId,
+          action: newIsLiked ? "liked" : "removed",
+        });
+      }
+    } catch {
+      console.log("Error toggling like:");
+    }
+  };
+
+  const addComment = async () => {
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/api/comments/${profile._id}`,
+        {
+          userId: objectIdUserId,
+          comment: newComment,
+        }
+      );
+
+      setComments([...comments, res.data]);
+      setNewComment("");
+      setOpenCommentModal(false);
+
+      if (socket) {
+        socket.emit("new_comment", {
+          profileId: profile._id,
+          userId: objectIdUserId,
+          comment: newComment,
+        });
+      }
+    } catch (err) {
+      console.error("Error adding comment:", err);
+    }
+  };
+
+  const handleNewCommentAdded = (newComment) => {
+    setComments((prevComments) => [...prevComments, newComment]);
+  };
 
   const handleDescriptionToggle = () => {
     setIsDescriptionExpanded(!isDescriptionExpanded);
@@ -70,7 +172,7 @@ const ProfileCard = ({ profile }) => {
   };
 
   return (
-    <Card sx={{  borderRadius: 4, boxShadow: 2, maxHeight: "auto" }}>
+    <Card sx={{ borderRadius: 4, boxShadow: 2, maxHeight: "auto" }}>
       <CardContent
         sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
@@ -131,7 +233,6 @@ const ProfileCard = ({ profile }) => {
           sx={{ fontSize: "0.875rem", padding: 0 }}
         >
           {isDescriptionExpanded ? "Show Less" : "Read More"}
-          
         </Link>
       </CardContent>
 
@@ -151,9 +252,36 @@ const ProfileCard = ({ profile }) => {
       </CardContent>
       <CardContent>
         <Grid2 display={"flex"} justifyContent={"end"}>
-          <FavoriteBorderIcon />
-          <ChatIcon/>
-          <MoreVertIcon/>
+          <IconButton onClick={toggleLike}>
+            <FavoriteBorderIcon>
+              <Badge badgeContent={likesCount} color="secondary">
+                {isLiked ? (
+                  <FavoriteIcon sx={{ color: "red" }} />
+                ) : (
+                  <FavoriteBorderIcon />
+                )}
+              </Badge>
+            </FavoriteBorderIcon>
+          </IconButton>
+          <IconButton onClick={() => setOpenCommentModal(true)}>
+            <ChatIcon />
+          </IconButton>
+          <MoreVertIcon />
+
+          <CardContent>
+            <Typography variant="body2">Comments:</Typography>
+            {comments.map((comment, index) => (
+              <Typography variant="body2" key={index}>
+                {comment.comment}
+              </Typography>
+            ))}
+          </CardContent>
+          <CommentModal
+            open={openCommentModal}
+            onClose={() => setOpenCommentModal(false)}
+            profileId={profile._id}
+            onCommentAdded={handleNewCommentAdded}
+          />
         </Grid2>
       </CardContent>
     </Card>

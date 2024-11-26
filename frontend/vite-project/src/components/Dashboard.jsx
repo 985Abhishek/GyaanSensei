@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import { Container } from "@mui/material";
 import CardHolder from "./CardHolder";
 import axios from "axios";
+import { SocketProvider } from "./SocketContext";
 
 const Dashboard = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -21,11 +22,13 @@ const Dashboard = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching profile data:", error.message);
-        setLoading(false);
+        //setLoading(false);
       }
     };
 
     fetchProfiles();
+
+    setLoading(false);
   }, []);
 
   if (loading) {
@@ -37,20 +40,22 @@ const Dashboard = () => {
   }
 
   return (
-    <div  >
-      <Navbar onDrawerToggle={() => setDrawerOpen(!drawerOpen)} />
-      <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    <SocketProvider>
+      <div>
+        <Navbar onDrawerToggle={() => setDrawerOpen(!drawerOpen)} />
+        <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      <Container  >
-        <h1 >Welcome to the Dashboard</h1>
+        <Container>
+          <h1>Welcome to the Dashboard</h1>
 
-        {profiles.length > 0 ? (
-          <CardHolder profiles={profiles} />
-        ) : (
-          <p>No profiles available.</p>
-        )}
-      </Container>
-    </div>
+          {profiles.length > 0 ? (
+            <CardHolder profiles={profiles} />
+          ) : (
+            <p>No profiles available.</p>
+          )}
+        </Container>
+      </div>
+    </SocketProvider>
   );
 };
 

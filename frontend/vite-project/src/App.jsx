@@ -6,26 +6,21 @@ import ForgotPassword from "./pages/ForgotPassword";
 import "./App.css";
 import Dashboard from "./components/Dashboard";
 import SampleProfileForm from "./pages/SampleProfileForm";
-import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-  
-      <div className="parent">
-        
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="*" element={<Navigate to="/login" />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+    <div className="parent">
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          <Route path="/profile" element={<SampleProfileForm />} />
-        </Routes>
-        <Toaster />
-      </div>
-   
+        <Route path="/profile" element={<SampleProfileForm />} />
+      </Routes>
+    </div>
   );
 }
 
