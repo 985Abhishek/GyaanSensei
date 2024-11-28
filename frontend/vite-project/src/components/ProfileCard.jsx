@@ -11,6 +11,7 @@ import {
   Grid2,
   IconButton,
   Badge,
+  Stack,
 } from "@mui/material";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -77,12 +78,14 @@ const ProfileCard = ({ profile }) => {
         return;
       }
       const objectIdUserId = mongoose.Types.ObjectId(userId);
+      console.log("User ID to be sent to API:", objectIdUserId);
       const res = await axios.post(
         `http://localhost:3000/api/likes/${profile._id}`,
         {
           userId: objectIdUserId,
         }
       );
+      console.log("User ID to be sent to API:", objectIdUserId);
 
       const newIsLiked = !isLiked;
       setIsLiked(newIsLiked);
@@ -172,46 +175,69 @@ const ProfileCard = ({ profile }) => {
   };
 
   return (
-    <Card sx={{ borderRadius: 4, boxShadow: 2, maxHeight: "auto" }}>
+    <Card
+      sx={{ borderRadius: 4, boxShadow: 2, maxHeight: "500px", width: "400px" }}
+    >
       <CardContent
-        sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "flex-start",
+          maxHeight: "120px",
+        }}
       >
         <Avatar
           alt={username}
           src={avatar}
           sx={{ width: 80, height: 80, mb: 2 }}
         />
-        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          {username}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Age: {age}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Gender: {gender}
-        </Typography>
+        <Stack direction={"column"}>
+          <Typography variant="h5" sx={{ fontWeight: "bold", ml: 1, mt: 1 }}>
+            {username}
+          </Typography>
+          <Typography variant="h6" sx={{ ml: 2, mt: -0.5 }}>
+            {age}
+          </Typography>
+        </Stack>
       </CardContent>
 
-      <Divider sx={{ margin: "1px 0" }} />
+      <Divider sx={{ margin: "1px" }} />
 
       <CardContent>
-        <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-          Skills:
+        <Typography
+          variant="body"
+          sx={{
+            fontWeight: "bold",
+            marginBottom: "10px",
+            border: "1px solid green",
+          }}
+        >
+          Skills
         </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1,
+            border: "1px solid red",
+          }}
+        >
           {skills.map((skill, index) => (
             <Chip
               key={index}
               label={skill}
               variant="outlined"
               color="primary"
-              sx={{ margin: "2px" }}
+              sx={{ margin: "10px" }}
             />
           ))}
         </Box>
       </CardContent>
 
-      <CardContent sx={{ paddingTop: 0 }}>
+      <CardContent sx={{ paddingTop: -1 }}>
+        <Typography variant="body" sx={{ fontWeight: "bold" }}>
+          Skills Description
+        </Typography>
         <Typography
           variant="body2"
           sx={{
@@ -220,7 +246,7 @@ const ProfileCard = ({ profile }) => {
             height: "38px",
             minHeight: "38px",
             overflow: "hidden",
-            WebkitLineClamp: isDescriptionExpanded ? "none" : 8,
+            WebkitLineClamp: isDescriptionExpanded ? "none" : 16,
             marginBottom: 1,
           }}
         >

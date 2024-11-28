@@ -32,8 +32,6 @@ const Login = () => {
     console.log(result, "result");
     alert(result.message || "Login successful!");
     if (!result.userId) {
-      // If the response isn't ok, throw an error
-      const errorResult = await response.json();
       alert(errorResult.message || "Login failed!");
       return;
     }
